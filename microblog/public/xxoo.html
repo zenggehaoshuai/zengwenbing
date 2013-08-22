@@ -1,0 +1,42 @@
+<html>
+ <head>
+
+ </head>
+<body>
+  <div id="ds">fds</div>
+</body>
+</html>
+<script type="text/javascript" src="javascripts/personalFrame.js"></script>
+
+<script type="text/javascript">
+    //方法不是引用类型的，而是值类型的
+                 var d = Person.dom.E("ds");
+    d.onclick = function(){
+         alert("哇擦，这是哥第一次调用");
+    }
+   function exec(eventName,newEvent){
+       d._express = eval("d.on"+eventName);
+       eval("d.on"+eventName+"=function(){return newEvent('话擦，这是哥第二次调用')}")
+   }
+    exec("click",function(x){alert(x)});
+    d._express();
+    //一级事件模型会覆盖
+
+            /*     function exec(eventName,newEvent){
+                            //绑定原来的执行函数
+                     d._express = eval("d.on"+eventName);
+                     eval("d.on"+eventName+"=function(){return newEvent('花擦')}");
+                 }
+                 d.express = function(){
+                      if(this._express != null){
+                           this._express();
+                      }
+                 }
+    exec("click",function(xx){alert(xx)});//相当于after后面      */
+
+               /*  d.express = function(){
+                      if(this._express != null){
+                          this._express();//调用当前的
+                      }
+                 }*/
+</script>
