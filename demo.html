@@ -1,0 +1,159 @@
+﻿<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script type="text/javascript"  src="jquery.js"></script>
+  </head>
+
+  <body>
+  <select id="list">
+  </select>
+  <button id="addButton">添加</button>
+  <button id="delButton">删除</button>
+           <script>
+     function Event(sender){
+                               this._sender = sender;
+                               this._listeners =[];
+     }
+     Event.prototype = {
+        attach:function(listener){
+           this._listeners.push(listener);
+        },
+        notify:function(args){
+          //为绑定的函数添加执行
+           var i = 0,len = this._listeners.length;
+           for(;i<len;i++) {
+             this._listeners[i](this._sender,args);
+           }
+        }
+
+     }
+     //一个下拉列表的例子，具有mvc
+     function ListModel(item){
+      this.items = item;
+      this.selectedIndex = -1;
+      this.addItemed = new Event(this);//改变控制器调用model改变view
+      this.delItemed = new Event(this);
+      this.selectItemed = new Event(this);
+     }
+     ListModel.prototype = {
+       //返回模型所有数据
+          getItems:function(){
+             return this.items;
+          },
+          addItem:function(item){
+                              this.items.push(item);
+
+                              this.addItemed.notify({item:item});//只是传数据进去
+
+          },
+          delItemAt:function(index){
+
+                  this.items.splice(index,1);
+
+                  //如果删除的是当前选中的
+                  if(this.selectedIndex === index){
+                   this.setItemIndex(-1);
+                  }
+                  this.delItemed.notify();
+          },
+          getItem:function(index){
+                          return this.items[index];
+          },
+          getItemIndex:function(){
+                          return this.selectedIndex;
+          },
+          setItemIndex:function(index){
+                  this.selectedIndex = index;
+                  this.selectItemed.notify({index:index});
+          },
+          clear:function(){
+              this.items = [];
+          }
+
+
+
+     }
+      function ListView(model,elements){
+         this.model = model;
+         this.elements = elements;
+         this.listChanged = new Event(this);
+         this.addButtonClicked = new Event(this);
+         this.delButtonClicked = new Event(this);
+          var _this = this;
+          this.model.addItemed.attach(function(){
+              //添加完数据之后刷新页面
+              _this.show();
+          })
+          this.model.delItemed.attach(function(){
+             _this.show();
+          })
+          this.elements.list.change(function(e){
+             _this.listChanged.notify({index:e.target.selectedIndex});
+          })
+          this.elements.addButton.click(function(){
+             //只要调用监听的绑定事件就可以
+               _this.addButtonClicked.notify();
+          })
+          this.elements.delButton.click(function(){
+              _this.delButtonClicked.notify();//attach不变
+          })
+      }
+      ListView.prototype = {
+       show:function(){
+          this.elements.list.empty();
+          var i,len,items = this.model.getItems();
+          for(i = 0,len = items.length;i<len;i++){
+                this.elements.list.append("<option>"+items[i]+"</option>");
+          }
+          //添加完了默认为不选中
+          this.model.setItemIndex(-1);
+       }
+      }
+      var ListController = function(model,view){
+                this.model = model;
+                this.view = view;
+                var _this = this;
+                this.view.listChanged.attach(function(sender,args){
+
+                    _this.updateSelected(args.index);//选中的项目
+                })
+                this.view.addButtonClicked.attach(function(){
+                   _this.addItem();
+                })
+                this.view.delButtonClicked.attach(function(){
+                                   _this.delItem();
+                                })
+      }
+      //响应用户操作
+      ListController.prototype = {
+           addItem:function(){
+              var item = prompt("Add Items");
+              if(item){
+                 this.model.addItem(item);
+              }
+           },
+           delItem:function(){
+              //获取当前选中的索引
+              var index = this.model.getItemIndex();
+              if(index != -1){
+                 this.model.delItemAt(index);
+              }
+           },
+          updateSelected:function(index){
+
+            this.model.setItemIndex(index);
+          }
+      }
+
+ var model = new ListModel(["node.js","javascript"]);
+ var view = new ListView(model,{
+  "list":$("#list"),
+  "addButton":$("#addButton"),
+  "delButton":$("#delButton")
+ });
+ var controller = new ListController(model,view);
+ view.show();
+           </script>
+  </body>
+</html>
